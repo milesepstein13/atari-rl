@@ -9,6 +9,6 @@ Options for algorithm names are ```['dqn', 'ddqn', 'adqn', 'mmdqn', 'cdqn', 'due
 
 Running with no algorithm specified uses DQN.
 
-I added the sarsa option, which uses Using SARSALambdaContinuous. It is continuous, but lots of other RL algorithms (e.g. standard Q learning) are discrete, but there may be additional options to add here https://mushroomrl.readthedocs.io/en/dev/_modules/index.html
+I added and am debugging the sarsa option, which uses Using SARSALambdaContinuous. It is continuous, but lots of other RL algorithms (e.g. standard Q learning) are discrete, but there may be additional options to add here https://mushroomrl.readthedocs.io/en/dev/_modules/index.html
 
 New Algorithms can be added by adding it to imports at line 12, adding its argument name at line 156, and
