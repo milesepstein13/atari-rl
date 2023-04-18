@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from mushroom_rl.algorithms.value import AveragedDQN, CategoricalDQN, DQN,\
-    DoubleDQN, MaxminDQN, DuelingDQN, NoisyDQN, QuantileDQN, Rainbow, QLearning
+    DoubleDQN, MaxminDQN, DuelingDQN, NoisyDQN, QuantileDQN, Rainbow, SARSALambdaContinuous
 from mushroom_rl.approximators.parametric import TorchApproximator
 from mushroom_rl.core import Core, Logger
 from mushroom_rl.environments import *
@@ -17,6 +17,8 @@ from mushroom_rl.policy import EpsGreedy
 from mushroom_rl.utils.dataset import compute_metrics
 from mushroom_rl.utils.parameters import LinearParameter, Parameter
 from mushroom_rl.utils.replay_memory import PrioritizedReplayMemory
+from mushroom_rl.features.basis import FourierBasis
+from mushroom_rl.features import Features
 
 """
 This script runs Atari experiments with DQN, and some of its variants, as
@@ -153,7 +155,7 @@ def experiment():
 
     arg_alg = parser.add_argument_group('Algorithm')
     arg_alg.add_argument("--algorithm", choices=['dqn', 'ddqn', 'adqn', 'mmdqn',
-                                                 'cdqn', 'dueldqn', 'ndqn', 'qdqn', 'rainbow', 'ql'],
+                                                 'cdqn', 'dueldqn', 'ndqn', 'qdqn', 'rainbow', 'sarsa'],
                          default='dqn',
                          help='Name of the algorithm. dqn is for standard'
                               'DQN, ddqn is for Double DQN and adqn is for'
@@ -208,6 +210,8 @@ def experiment():
     arg_alg.add_argument("--sigma-coeff", type=float, default=.5,
                          help='Sigma0 coefficient for noise initialization in'
                               'NoisyDQN and Rainbow.')
+    arg_alg.add_argument("--lambda-coeff", type=float, default=.5,
+                         help = 'Lambda coefficient for SARSA.')
 
     arg_utils = parser.add_argument_group('Utils')
     arg_utils.add_argument('--use-cuda', action='store_true',
@@ -387,6 +391,22 @@ def experiment():
                         v_max=args.v_max, n_steps_return=args.n_steps_return,
                         alpha_coeff=args.alpha_coeff, beta=beta,
                         sigma_coeff=args.sigma_coeff, **algorithm_params)
+        elif args.algorithm == 'sarsa': # https://mushroomrl.readthedocs.io/en/latest/source/tutorials/tutorials.1_advanced.html
+            fb = FourierBasis.generate(mdp.info.observation_space.low,
+                                       mdp.info.observation_space.high, 
+                                       2)
+            features = Features(basis_list = [fb]) # The above link used tiles here, but that was giving me dimension errors, so trying fourier basis
+            approximator_params = dict(
+                input_shape=mdp.info.observation_space.shape,
+                output_shape=(mdp.info.action_space.n,),
+                n_actions=mdp.info.action_space.n,
+            ) # probably would be better to specify this, but oh well
+            alg = SARSALambdaContinuous 
+            agent = alg(mdp.info, pi, approximator,
+                        approximator_params=approximator_params,
+                        learning_rate = args.learning_rate,
+                        lambda_coeff = args.lambda_coeff, 
+                        features = features) # STUCK: I can't figure out how to define features in a way that works. https://mushroomrl.readthedocs.io/en/latest/source/mushroom_rl.features.html
 
         logger = Logger(alg.__name__, results_dir=None)
         logger.strong_line()
