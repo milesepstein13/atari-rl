@@ -407,7 +407,7 @@ def experiment():
                         learning_rate = args.learning_rate,
                         lambda_coeff = args.lambda_coeff, 
                         features = features) # STUCK: I can't figure out how to define features in a way that works. https://mushroomrl.readthedocs.io/en/latest/source/mushroom_rl.features.html
-
+                                            # I've tried both tiles (as in the tutorial linked above) and basis (as is here now)
         logger = Logger(alg.__name__, results_dir=None)
         logger.strong_line()
         logger.info('Experiment Algorithm: ' + alg.__name__)
