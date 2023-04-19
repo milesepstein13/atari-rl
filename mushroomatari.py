@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from mushroom_rl.algorithms.value import AveragedDQN, CategoricalDQN, DQN,\
     DoubleDQN, MaxminDQN, DuelingDQN, NoisyDQN, QuantileDQN, Rainbow, SARSALambdaContinuous
 from mushroom_rl.approximators.parametric import TorchApproximator
+from mushroom_rl.approximators.parametric import LinearApproximator
 from mushroom_rl.core import Core, Logger
 from mushroom_rl.environments import *
 from mushroom_rl.policy import EpsGreedy
@@ -402,12 +403,18 @@ def experiment():
                 n_actions=mdp.info.action_space.n,
             ) # probably would be better to specify this, but oh well
             alg = SARSALambdaContinuous 
-            agent = alg(mdp.info, pi, approximator,
+            agent = alg(mdp.info, 
+                        pi, 
+                        LinearApproximator,
                         approximator_params=approximator_params,
                         learning_rate = args.learning_rate,
                         lambda_coeff = args.lambda_coeff, 
                         features = features) # STUCK: I can't figure out how to define features in a way that works. https://mushroomrl.readthedocs.io/en/latest/source/mushroom_rl.features.html
                                             # I've tried both tiles (as in the tutorial linked above) and basis (as is here now)
+
+                                            # Both approaches seem to be failing ecause the dimensionality of inputs is too big
+
+                                            # Could: look for a different method to implement that handles higher dimension inputs, or choose a different environment with 1 dimensional inputs
         logger = Logger(alg.__name__, results_dir=None)
         logger.strong_line()
         logger.info('Experiment Algorithm: ' + alg.__name__)
